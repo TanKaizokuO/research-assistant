@@ -1,3 +1,6 @@
+from calendar import c
+from re import S
+
 from logger import (
     get_logger,
     log_tool_call,
@@ -24,7 +27,7 @@ SUMMARISER_MODEL = ChatNVIDIA(model="moonshotai/kimi-k2-instruct-0905")
 
 
 @tool("Tavily Web Search", return_direct=True)
-def Tavily_Client(
+def manual_web_search(
     tavily_api_key: str,
     query: str,
     max_results: int = 5,
@@ -111,12 +114,23 @@ def Tavily_Client(
             logger.debug(f"Skipping {url!r} — no content available.")
             continue
         try:
+            confidence = SUMMARISER_MODEL.invoke(
+                f"Assess the quality of the following content according to the given query: {query}. "
+                "Consider factors like relevance, completeness, and readability. "
+                "Respond with a single confidence score from 0 to 100, where 100 means "
+                "the content is highly relevant, complete, and well-written, and 0 means it is not useful at all."
+                f"\n\nContent:\n{content}"
+            )
+            confidence_score = (
+                int(confidence.content.strip()) if url not in extracted else 75
+            )
             sources.append(
                 _to_source_schema(
                     url=url,
                     title=meta["title"],
                     content=content,
                     idx=idx,
+                    confidence_score=confidence_score,
                     used_fallback=url not in extracted,
                 )
             )
@@ -176,10 +190,11 @@ def _to_source_schema(
     content: str,
     idx: int,
     used_fallback: bool = False,
+    confidence_score: int = 70,
 ) -> SourceSchema:
     """Convert raw fields into a SourceSchema instance."""
     # Confidence is slightly lower when we only have the search snippet.
-    confidence = 70 if used_fallback else 85
+    # confidence = 70 if used_fallback else 85
 
     # FIX 1: Truncate before passing to SourceSchema — raw extracted content
     # routinely exceeds max_length=2000, which would raise a ValidationError.
@@ -195,5 +210,5 @@ def _to_source_schema(
         # a TypeError when mixed with a naive datetime. Use aware UTC instead.
         retrieval_timestamp=datetime.now(timezone.utc),
         summary=summary,
-        confidence_score=confidence,
+        confidence_score=confidence_score,
     )
