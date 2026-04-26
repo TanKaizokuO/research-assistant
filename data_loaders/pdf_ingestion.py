@@ -476,29 +476,24 @@ def ingest_pdf_from_user():
 
 
 # -------------------------------
-# CONFIG (EDIT HERE)
-# -------------------------------
-# set None to skip
-
-
-# -------------------------------
 # RUN PIPELINE
 # -------------------------------
 def main():
     TEST_QUERY = None
+    DB_DIR = Path("../chroma_db")
+    COLLECTION = "literature_db"
 
-    if TEST_QUERY:
-        print(f"\n── Test query: '{TEST_QUERY}' ──")
+    print(f"\n── Test query: '{TEST_QUERY}' ──")
 
-        hits = query_db(TEST_QUERY, db_dir=DB_DIR, collection=COLLECTION)
+    hits = query_db(TEST_QUERY, db_dir=DB_DIR, collection=COLLECTION)
 
-        for i, h in enumerate(hits, 1):
-            print(
-                f"\n[{i}] score={h['score']} | "
-                f"{h['metadata'].get('title','?')} "
-                f"({h['metadata'].get('year','')})"
-            )
-            print(h["text"][:300])
+    for i, h in enumerate(hits, 1):
+        print(
+            f"\n[{i}] score={h['score']} | "
+            f"{h['metadata'].get('title','?')} "
+            f"({h['metadata'].get('year','')})"
+        )
+        print(h["text"][:300])
 
 
 # -------------------------------
