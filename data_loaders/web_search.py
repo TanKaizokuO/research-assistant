@@ -27,7 +27,6 @@ _SUMMARY_MAX_LENGTH = 2000  # must match SourceSchema.summary max_length
 SUMMARISER_MODEL = ChatNVIDIA(model="moonshotai/kimi-k2-instruct-0905")
 
 
-@tool("Tavily Web Search", return_direct=True)
 def manual_web_search(
     tavily_api_key: str,
     query: str,
