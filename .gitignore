@@ -73,3 +73,9 @@ Thumbs.db
 
 # Generated artifacts
 map_result.json
+
+# Runtime-generated directories
+arxiv/
+chroma_db/
+pdf-from-url/
+pdf-from-user/
