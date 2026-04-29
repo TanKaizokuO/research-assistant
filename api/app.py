@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from api.routers import citations, literature, research
+from api.agent.router import router as agent_router
 
 
 def create_app() -> FastAPI:
@@ -34,6 +35,7 @@ def create_app() -> FastAPI:
     app.include_router(research.router,   prefix="/research",   tags=["Topic Research"])
     app.include_router(literature.router, prefix="/literature", tags=["Literature Review"])
     app.include_router(citations.router,  prefix="/citations",  tags=["Citations"])
+    app.include_router(agent_router,      prefix="/agent",      tags=["Agent"])
 
     # ── Health check ──────────────────────────────────────────────────────
     @app.get("/health", tags=["Health"])

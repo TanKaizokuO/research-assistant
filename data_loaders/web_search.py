@@ -130,7 +130,7 @@ def manual_web_search(
                 "the content is highly relevant, complete, and well-written, and 0 means it is not useful at all."
                 f"\n\nContent:\n{content}"
             )
-            confidence = SUMMARISER_MODEL.invoke(HumanMessage(content=prompt))
+            confidence = SUMMARISER_MODEL.invoke([HumanMessage(content=prompt)])
             confidence_score = (
                 int(confidence.content.strip()) if url not in extracted else 75
             )
@@ -176,46 +176,26 @@ def _chunk(lst: list, size: int):
 
 
 def _truncate_to_sentence(text: str, max_len: int) -> str:
-    """Reduce text length to fit schema limits while preserving readability.
-
-    This function shortens content to a maximum character limit, preferring a
-    sentence boundary when possible so output remains coherent. For oversized
-    text, it uses iterative model-based summarization and falls back to a hard
-    cutoff strategy if repeated summarization attempts do not converge.
-
-    Attributes:
-        text (str): Raw content that may exceed the allowed summary length.
-        max_len (int): Maximum output length permitted for the summary field.
-
-    Example:
-        summary = _truncate_to_sentence(article_text, 2000)
-    """
     if len(text) <= max_len:
         return text
-
     else:
         c = 0
-        while len(text) > max_len:
-            truncated = SUMMARISER_MODEL.invoke(
+        original_max_len = max_len
+        while len(text) > original_max_len and c <= 3:
+            truncated = SUMMARISER_MODEL.invoke([
                 HumanMessage(
-                    content=f"Summarise the following text into less than {max_len} characters: {text}"
+                    content=f"Summarise the following text into less than {original_max_len} characters: {text}"
                 )
-            )
-            max_len = len(
-                truncated.content
-            )  # update max_len to the new truncated length
+            ])
             text = truncated.content
             c += 1
-            if c > 3:
-                break
-    if c > 3:
-        truncated = text[:max_len]
-        last_period = truncated.rfind(".")
-        # Only cut at a sentence boundary if it leaves a reasonable amount of text.
-        if last_period > max_len // 2:
-            return truncated[: last_period + 1]
-        return truncated
-    else:
+            
+        if len(text) > original_max_len:
+            truncated_text = text[:original_max_len]
+            last_period = truncated_text.rfind(".")
+            if last_period > original_max_len // 2:
+                return truncated_text[: last_period + 1]
+            return truncated_text
         return text
 
 
