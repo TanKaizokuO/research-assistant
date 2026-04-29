@@ -2,9 +2,9 @@ from data_loaders.pdf_ingestion import query_db
 from pathlib import Path
 
 
-def main():
+def retrieve(DB_DIR):
     TEST_QUERY = "YOLO"
-    DB_DIR = Path("./chroma_db")
+    # DB_DIR = Path("./chroma_db")
     COLLECTION = "literature_db"
 
     print(f"\n── Test query: '{TEST_QUERY}' ──")
@@ -18,10 +18,3 @@ def main():
             f"({h['metadata'].get('year','')})"
         )
         print(h["text"][:300])
-
-
-# -------------------------------
-# ENTRY POINT
-# -------------------------------
-if __name__ == "__main__":
-    main()

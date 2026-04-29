@@ -1,17 +1,9 @@
-from numpy import rint
-
-from logger import configure_logging
-import logging
-from data_loaders.web_search import Tavily_Client
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
+# main.py — entry point for the Research Assistant FastAPI backend.
+# Fixes two bugs from the original:
+#   1. `from data_loaders.web_search import Tavily_Client` — that export does
+#      not exist; the correct callable is `manual_web_search`.
+#   2. `from numpy import rint` — unused import, not needed here.
+import uvicorn
 
 if __name__ == "__main__":
-    tavily_api_key = os.getenv("TAVILY_API_KEY")
-
-    configure_logging()
-    sources = Tavily_Client(tavily_api_key)
-    logging.info(f"Retrieved {len(sources)} sources.")
+    uvicorn.run("api.app:app", host="0.0.0.0", port=8000, reload=True)

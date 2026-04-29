@@ -21,7 +21,7 @@ PDF_DIR = Path("pdf-from-user")
 DB_DIR = Path("vector_db")
 COLLECTION = "literature_review"
 
-EMBED_MODEL = "BAAI/bge-small-en"
+EMBED_MODEL = "BAAI/bge-base-en"
 
 # Chunking — tuned for academic papers
 CHUNK_SIZE = 512  # tokens (approx chars / 4)
@@ -459,7 +459,7 @@ def _heuristic_abstract(text: str) -> str:
 
 def ingest_pdf_from_user():
     PDF_DIR = Path("./pdf-from-user")
-    DB_DIR = Path("../chroma_db")
+    DB_DIR = Path("./chroma_db")
     COLLECTION = "literature_db"
 
     BATCH_SIZE = 64

@@ -1,0 +1,9 @@
+{
+  "status": "done",
+  "ingested": 5,
+  "skipped": 0,
+  "errors": [],
+  "db_path": "/home/tankaizokuo/Code/Research_Assistant/chroma_db",
+  "collection": "literature_db",
+  "total_chunks": 103
+}
