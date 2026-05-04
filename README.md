@@ -1,6 +1,6 @@
 # Research Assistant FastAPI Backend
 
-An AI-powered FastAPI backend providing intelligent research capabilities, literature reviews, and citation graph analysis. It integrates with Tavily for web search, arXiv, Semantic Scholar, and uses NVIDIA LLMs via LangChain for reasoning and summarization.
+An AI-powered FastAPI backend providing intelligent research capabilities, literature reviews, and citation graph analysis. It integrates with Tavily for web searching, arXiv, Semantic Scholar, and uses NVIDIA LLMs via LangChain for reasoning and summarization.
 
 ## Features
 
