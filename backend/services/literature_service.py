@@ -25,7 +25,7 @@ from services.research_service import AcademicHit  # reuse shared model
 
 PDF_DIR = Path("pdf-from-user")
 DB_DIR = Path("chroma_db")
-COLLECTION = "literature_db"
+COLLECTION = "literature_db"  # ChromaDB collection name for ingested user PDFs
 
 
 # ── Request / Response models ──────────────────────────────────────────────
