@@ -81,12 +81,12 @@ Format strictly as: 0,2,4
 """
 
     response = SUMMARISER_MODEL.invoke([HumanMessage(content=prompt)])
-    raw = response.content.strip()
+    llm_raw_output = response.content.strip()
 
-    indices = list(map(int, re.findall(r"\d+", raw)))
+    indices = list(map(int, re.findall(r"\d+", llm_raw_output)))
 
     if not indices:
-        raise ValueError(f"Invalid LLM output: {raw}")
+        raise ValueError(f"Invalid LLM output: {llm_raw_output}")
 
     indices = [i for i in indices if 0 <= i < len(docs)][:3]
 
