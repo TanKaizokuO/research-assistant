@@ -6,6 +6,7 @@ literature review generation (vector DB query + optional supplementation
 from arXiv / Semantic Scholar + LLM prose generation).
 """
 import asyncio
+import re
 import shutil
 from pathlib import Path
 from typing import List, Optional
@@ -147,11 +148,22 @@ async def run_literature_review(req: LiteratureRequest, tavily_key: str) -> Lite
 
             if "arxiv" in sup_map and not isinstance(sup_map["arxiv"], Exception):
                 for p in sup_map["arxiv"].get("saved_papers", []):
+                    published_str = p.get("published", "")
+                    year = None
+                    if published_str:
+                        match = re.search(r'\b\d{4}\b', published_str)
+                        if match:
+                            year = int(match.group(0))
+                    authors_raw = p.get("authors", "")
+                    authors_list = [a.strip() for a in authors_raw.split(",")] if authors_raw else []
+
                     supplementary.append(
                         AcademicHit(
                             title=p["title"],
+                            authors=authors_list,
+                            venue="arXiv",
                             abstract=None,
-                            year=None,
+                            year=year,
                             citations=None,
                             pdf_url=None,
                             source="arxiv",
@@ -163,6 +175,8 @@ async def run_literature_review(req: LiteratureRequest, tavily_key: str) -> Lite
                     supplementary.append(
                         AcademicHit(
                             title=p.get("title") or "Unknown",
+                            authors=p.get("authors"),
+                            venue=p.get("venue"),
                             abstract=p.get("abstract"),
                             year=p.get("year"),
                             citations=p.get("citations"),
@@ -174,16 +188,20 @@ async def run_literature_review(req: LiteratureRequest, tavily_key: str) -> Lite
     # ── Step 3: Build LLM context ──────────────────────────────────────────
     chunk_context = "\n\n".join(
         [
-            f"[From: {c.title or c.filename}, {c.year}]\n{c.text[:600]}"
+            f"[From: \"{c.title}\" by {c.authors or 'Unknown'} ({c.year or 'N/A'})]\n{c.text[:600]}"
             for c in db_chunks[:8]
         ]
     )
-    sup_context = "\n".join(
-        [
-            f"- {a.title} ({a.year or 'n/d'}): {(a.abstract or '')[:300]}"
-            for a in supplementary[:5]
-        ]
-    )
+    sup_context_list = []
+    for a in supplementary[:5]:
+        authors_str = ", ".join(a.authors) if a.authors else "Unknown Authors"
+        venue_str = f" in {a.venue}" if a.venue else ""
+        year_str = f" ({a.year})" if a.year else ""
+        abstract_str = (a.abstract or '')[:300]
+        sup_context_list.append(
+            f"- \"{a.title}\" by {authors_str}{venue_str}{year_str}: {abstract_str}"
+        )
+    sup_context = "\n".join(sup_context_list)
 
     prompt = (
         f'You are an expert academic writer. Write a structured literature review on:\n"{req.topic}"\n\n'

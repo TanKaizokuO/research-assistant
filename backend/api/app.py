@@ -11,6 +11,10 @@ from fastapi.responses import JSONResponse
 
 from api.routers import citations, literature, research
 from api.agent.router import router as agent_router
+from api.limiter import limiter
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 
 def create_app() -> FastAPI:
@@ -23,6 +27,9 @@ def create_app() -> FastAPI:
         ),
     )
 
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
     # ── CORS ──────────────────────────────────────────────────────────────
     app.add_middleware(
         CORSMiddleware,
@@ -30,6 +37,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(SlowAPIMiddleware)
 
     # ── Routers ───────────────────────────────────────────────────────────
     app.include_router(research.router,   prefix="/research",   tags=["Topic Research"])

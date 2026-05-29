@@ -7,7 +7,7 @@ from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from urllib.parse import urlparse
 
 logger = get_logger(__name__)
-SUMMARISER_MODEL = ChatNVIDIA(model="moonshotai/kimi-k2-instruct-0905")
+SUMMARISER_MODEL = ChatNVIDIA(model="meta/llama-3.1-8b-instruct")
 
 
 def extract_arxiv_id(url: str) -> str:
@@ -146,6 +146,8 @@ Format strictly as: 0,2,4
             {
                 "index": idx,
                 "title": metadata.get("Title"),
+                "authors": metadata.get("Authors"),
+                "published": metadata.get("Published"),
                 "file_path": filepath,
             }
         )

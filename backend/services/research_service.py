@@ -5,6 +5,7 @@ Fans out to three sources concurrently (web, arXiv, Semantic Scholar),
 merges results, and generates an LLM research brief.
 """
 import asyncio
+import re
 from typing import List, Optional
 
 from langchain_core.messages import HumanMessage
@@ -31,6 +32,8 @@ class ResearchRequest(BaseModel):
 
 class AcademicHit(BaseModel):
     title: str
+    authors: Optional[List[str]] = None
+    venue: Optional[str] = None
     abstract: Optional[str] = None
     year: Optional[int] = None
     citations: Optional[int] = None
@@ -101,11 +104,22 @@ async def run_research(req: ResearchRequest, tavily_key: str) -> ResearchRespons
         else:
             arxiv_files = [p["file_path"] for p in r.get("saved_papers", [])]
             for p in r.get("saved_papers", []):
+                published_str = p.get("published", "")
+                year = None
+                if published_str:
+                    match = re.search(r'\b\d{4}\b', published_str)
+                    if match:
+                        year = int(match.group(0))
+                authors_raw = p.get("authors", "")
+                authors_list = [a.strip() for a in authors_raw.split(",")] if authors_raw else []
+
                 academic_hits.append(
                     AcademicHit(
                         title=p["title"],
+                        authors=authors_list,
+                        venue="arXiv",
                         abstract=None,
-                        year=None,
+                        year=year,
                         citations=None,
                         pdf_url=None,
                         source="arxiv",
@@ -121,6 +135,8 @@ async def run_research(req: ResearchRequest, tavily_key: str) -> ResearchRespons
                 academic_hits.append(
                     AcademicHit(
                         title=p.get("title") or "Unknown",
+                        authors=p.get("authors"),
+                        venue=p.get("venue"),
                         abstract=p.get("abstract"),
                         year=p.get("year"),
                         citations=p.get("citations"),
@@ -130,13 +146,19 @@ async def run_research(req: ResearchRequest, tavily_key: str) -> ResearchRespons
                 )
 
     # ── Build LLM prompt from merged context ──────────────────────────────
+    academic_snippets = []
+    for a in academic_hits[:5]:
+        authors_str = ", ".join(a.authors) if a.authors else "Unknown Authors"
+        venue_str = f" in {a.venue}" if a.venue else ""
+        year_str = f" ({a.year})" if a.year else ""
+        abstract_str = a.abstract[:300] if a.abstract else 'No abstract'
+        academic_snippets.append(
+            f"- [{a.source}] \"{a.title}\" by {authors_str}{venue_str}{year_str}\n  Abstract: {abstract_str}"
+        )
+
     context_snippets = "\n\n".join(
         [f"- {s.title}: {s.summary[:300]}" for s in web_sources[:5]]
-        + [
-            f"- [{a.source}] {a.title}: "
-            f"{a.abstract[:300] if a.abstract else 'No abstract'}"
-            for a in academic_hits[:5]
-        ]
+        + academic_snippets
     )
 
     prompt = (

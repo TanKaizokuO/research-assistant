@@ -21,7 +21,7 @@ def paper_search(query: str, limit: int = 5) -> list:
     params = {
         "query": query,
         "limit": limit,
-        "fields": "title,abstract,year,citationCount,openAccessPdf",
+        "fields": "title,abstract,year,citationCount,openAccessPdf,authors,venue",
     }
 
     logger.info("Searching papers for query=%s limit=%s", query, limit)
@@ -40,6 +40,8 @@ def paper_search(query: str, limit: int = 5) -> list:
             "year": p.get("year"),
             "citations": p.get("citationCount"),
             "pdf": (p.get("openAccessPdf") or {}).get("url"),
+            "authors": [a.get("name") for a in p.get("authors", [])] if p.get("authors") else [],
+            "venue": p.get("venue"),
         }
         for p in data
     ]

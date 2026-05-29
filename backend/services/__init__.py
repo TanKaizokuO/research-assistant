@@ -10,4 +10,4 @@ from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 load_dotenv()
 
-LLM = ChatNVIDIA(model="moonshotai/kimi-k2-instruct-0905")
+LLM = ChatNVIDIA(model="meta/llama-3.1-70b-instruct")

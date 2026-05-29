@@ -30,7 +30,23 @@ async def research_topic(topic: str) -> str:
             include_web=True
         )
         response = await run_research(req, tavily_key)
-        return f"Summary:\n{response.summary}\n\nSources examined: {len(response.web_sources) + len(response.academic_hits)} items."
+        sources_list = []
+        for i, a in enumerate(response.academic_hits):
+            authors_str = ", ".join(a.authors) if a.authors else "Unknown"
+            venue_str = f", published in {a.venue}" if a.venue else ""
+            year_str = f", {a.year}" if a.year else ""
+            sources_list.append(
+                f"Academic Hit [{i+1}]: \"{a.title}\" by {authors_str}{venue_str}{year_str}."
+            )
+        for i, w in enumerate(response.web_sources):
+            sources_list.append(
+                f"Web Source [{i+1}]: \"{w.title}\" ({w.url})."
+            )
+        sources_text = "\n".join(sources_list)
+        return (
+            f"Summary:\n{response.summary}\n\n"
+            f"Sources examined:\n{sources_text}"
+        )
     except Exception as e:
         return f"Error executing research_topic: {str(e)}"
 
@@ -55,7 +71,23 @@ async def literature_review(topic: str) -> str:
             supplement_with_arxiv=True
         )
         response = await run_literature_review(req, tavily_key)
-        return f"Literature Review:\n{response.review}"
+        sources_list = []
+        for i, c in enumerate(response.db_chunks):
+            sources_list.append(
+                f"Primary PDF Chunk [{i+1}]: \"{c.title}\" by {c.authors or 'Unknown'} ({c.year or 'N/A'})."
+            )
+        for i, a in enumerate(response.supplementary_papers):
+            authors_str = ", ".join(a.authors) if a.authors else "Unknown"
+            venue_str = f", published in {a.venue}" if a.venue else ""
+            year_str = f", {a.year}" if a.year else ""
+            sources_list.append(
+                f"Supplementary Paper [{i+1}]: \"{a.title}\" by {authors_str}{venue_str}{year_str}."
+            )
+        sources_text = "\n".join(sources_list)
+        return (
+            f"Literature Review:\n{response.review}\n\n"
+            f"Sources examined:\n{sources_text}"
+        )
     except Exception as e:
         return f"Error executing literature_review: {str(e)}"
 
@@ -77,7 +109,33 @@ async def citation_graph(query: str) -> str:
             include_citations=True
         )
         response = await run_citation_finder(req)
-        return f"Citation Landscape Summary:\n{response.context_summary}"
+        
+        resolved_str = "None"
+        if response.resolved_paper:
+            p = response.resolved_paper
+            authors_str = ", ".join(p.authors) if p.authors else "Unknown"
+            venue_str = f", published in {p.venue}" if p.venue else ""
+            year_str = f", {p.year}" if p.year else ""
+            resolved_str = f"\"{p.title}\" by {authors_str}{venue_str}{year_str}."
+
+        ref_lines = []
+        for p in response.references[:10]:
+            authors_str = ", ".join(p.authors) if p.authors else "Unknown"
+            venue_str = f", published in {p.venue}" if p.venue else ""
+            ref_lines.append(f"- \"{p.title}\" by {authors_str}{venue_str} ({p.year or 'N/A'})")
+            
+        cit_lines = []
+        for p in response.citations[:10]:
+            authors_str = ", ".join(p.authors) if p.authors else "Unknown"
+            venue_str = f", published in {p.venue}" if p.venue else ""
+            cit_lines.append(f"- \"{p.title}\" by {authors_str}{venue_str} ({p.year or 'N/A'})")
+            
+        return (
+            f"Resolved Paper:\n{resolved_str}\n\n"
+            f"Citation Landscape Summary:\n{response.context_summary}\n\n"
+            f"References:\n" + ("\n".join(ref_lines) if ref_lines else "None") + "\n\n"
+            f"Citations:\n" + ("\n".join(cit_lines) if cit_lines else "None")
+        )
     except Exception as e:
         return f"Error executing citation_graph: {str(e)}"
 

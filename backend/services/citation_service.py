@@ -19,8 +19,8 @@ from data_loaders.semantic_scholar_loader import (
 from services import LLM
 
 # Fields requested from the Semantic Scholar API
-PAPER_FIELDS = "title,abstract,year,authors,citationCount,openAccessPdf,externalIds"
-REF_FIELDS = "title,abstract,year,authors,citationCount,openAccessPdf"
+PAPER_FIELDS = "title,abstract,year,authors,citationCount,openAccessPdf,externalIds,venue"
+REF_FIELDS = "title,abstract,year,authors,citationCount,openAccessPdf,venue"
 
 
 # ── Request / Response models ──────────────────────────────────────────────
@@ -43,6 +43,7 @@ class PaperRef(BaseModel):
     title: Optional[str] = None
     year: Optional[int] = None
     authors: Optional[List[str]] = None
+    venue: Optional[str] = None
     abstract: Optional[str] = None
     citation_count: Optional[int] = None
     open_access_pdf: Optional[str] = None
@@ -62,13 +63,14 @@ class CitationResponse(BaseModel):
 
 def _parse_paper(raw: dict) -> PaperRef:
     """Convert a raw Semantic Scholar API paper dict into a PaperRef model."""
-    authors = [a.get("name", "") for a in raw.get("authors", [])]
+    authors = [a.get("name", "") if isinstance(a, dict) else str(a) for a in raw.get("authors", []) or []]
     pdf = (raw.get("openAccessPdf") or {}).get("url")
     return PaperRef(
         paperId=raw.get("paperId"),
         title=raw.get("title"),
         year=raw.get("year"),
         authors=authors,
+        venue=raw.get("venue"),
         abstract=raw.get("abstract"),
         citation_count=raw.get("citationCount"),
         open_access_pdf=pdf,
@@ -81,8 +83,10 @@ def _parse_edge_list(raw: dict, edge_key: str) -> List[PaperRef]:
     The API returns `{"data": [{edge_key: {paper fields}}, ...]}`.
     `edge_key` is "citedPaper" for references and "citingPaper" for citations.
     """
+    if not raw or not isinstance(raw, dict):
+        return []
     results: List[PaperRef] = []
-    for item in raw.get("data", []):
+    for item in raw.get("data", []) or []:
         paper_data = item.get(edge_key) or {}
         if paper_data:
             results.append(_parse_paper(paper_data))
@@ -158,12 +162,22 @@ async def run_citation_finder(req: CitationRequest) -> CitationResponse:
             citations_list = _parse_edge_list(cits_raw, "citingPaper")
 
     # ── Step 3: LLM citation-landscape summary ────────────────────────────
-    ref_titles = "\n".join(
-        [f"- {r.title} ({r.year})" for r in references[:10] if r.title]
-    )
-    cit_titles = "\n".join(
-        [f"- {c.title} ({c.year})" for c in citations_list[:10] if c.title]
-    )
+    ref_titles_list = []
+    for r in references[:10]:
+        if r.title:
+            authors_str = ", ".join(r.authors) if r.authors else "Unknown Authors"
+            venue_str = f" in {r.venue}" if r.venue else ""
+            ref_titles_list.append(f"- \"{r.title}\" by {authors_str}{venue_str} ({r.year or 'N/A'})")
+    ref_titles = "\n".join(ref_titles_list)
+
+    cit_titles_list = []
+    for c in citations_list[:10]:
+        if c.title:
+            authors_str = ", ".join(c.authors) if c.authors else "Unknown Authors"
+            venue_str = f" in {c.venue}" if c.venue else ""
+            cit_titles_list.append(f"- \"{c.title}\" by {authors_str}{venue_str} ({c.year or 'N/A'})")
+    cit_titles = "\n".join(cit_titles_list)
+
     paper_abstract = (resolved_paper.abstract or "") if resolved_paper else ""
 
     prompt = (

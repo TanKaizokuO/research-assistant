@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 _EXTRACT_BATCH_SIZE = 5
 _EXTRACT_MAX_URLS = 20  # hard cap to stay within free-tier usage
 _SUMMARY_MAX_LENGTH = 2000  # must match SourceSchema.summary max_length
-SUMMARISER_MODEL = ChatNVIDIA(model="moonshotai/kimi-k2-instruct-0905")
+SUMMARISER_MODEL = ChatNVIDIA(model="meta/llama-3.1-8b-instruct")
 
 
 def manual_web_search(
