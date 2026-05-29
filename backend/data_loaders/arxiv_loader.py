@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 logger = get_logger(__name__)
 load_dotenv()
 SUMMARISER_MODEL = ChatGoogleGenerativeAI(
-    model="gemini-3.5-flash",
+    model="gemini-2.5-flash",
     google_api_key=os.getenv("GOOGLE_API_KEY"),
     temperature=0.1
 )

@@ -28,7 +28,7 @@ _EXTRACT_MAX_URLS = 20  # hard cap to stay within free-tier usage
 _SUMMARY_MAX_LENGTH = 2000  # must match SourceSchema.summary max_length
 load_dotenv()
 SUMMARISER_MODEL = ChatGoogleGenerativeAI(
-    model="gemini-3.5-flash",
+    model="gemini-2.5-flash",
     google_api_key=os.getenv("GOOGLE_API_KEY"),
     temperature=0.1
 )

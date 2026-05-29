@@ -38,7 +38,7 @@ async def router_node(state: AgentState):
         return {"available_tools": [t.name for t in all_tools]}
 
     llm = ChatGoogleGenerativeAI(
-        model="gemini-3.5-flash",
+        model="gemini-2.5-flash",
         google_api_key=get_google_key(),
         temperature=0.1
     ).with_structured_output(RouterOutput)
@@ -78,7 +78,7 @@ async def agent_node(state: AgentState):
     ]
     
     llm = ChatGoogleGenerativeAI(
-        model="gemini-3.5-flash",
+        model="gemini-2.5-flash",
         google_api_key=get_google_key(),
         temperature=0.1,
         max_tokens=4096,
