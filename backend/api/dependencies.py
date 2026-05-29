@@ -28,3 +28,13 @@ def get_nvidia_key() -> str:
     if not key:
         raise RuntimeError("NVIDIA_API_KEY is not set in the environment")
     return key
+
+
+@lru_cache()
+def get_google_key() -> str:
+    """Return the GOOGLE API key, raising RuntimeError if not set."""
+    key = os.getenv("GOOGLE_API_KEY")
+    if not key:
+        raise RuntimeError("GOOGLE_API_KEY is not set in the environment")
+    return key
+

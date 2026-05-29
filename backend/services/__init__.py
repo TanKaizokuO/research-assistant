@@ -6,8 +6,12 @@ Import with:
 """
 import os
 from dotenv import load_dotenv
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 load_dotenv()
 
-LLM = ChatNVIDIA(model="meta/llama-3.1-70b-instruct")
+LLM = ChatGoogleGenerativeAI(
+    model="gemini-3.5-flash",
+    google_api_key=os.getenv("GOOGLE_API_KEY"),
+    temperature=0.1
+)

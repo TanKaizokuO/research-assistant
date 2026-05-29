@@ -4,12 +4,12 @@ api/agent/agent.py — Builds and runs the LangGraph agent.
 import json
 from typing import TypedDict, Annotated, List, Sequence
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, ToolMessage
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field
 
-from api.dependencies import get_nvidia_key
+from api.dependencies import get_google_key
 from api.agent.tools import research_topic, literature_review, citation_graph, ingest_pdf
 
 # Global tools
@@ -37,9 +37,9 @@ async def router_node(state: AgentState):
     if not last_human_msg:
         return {"available_tools": [t.name for t in all_tools]}
 
-    llm = ChatNVIDIA(
-        model="meta/llama-3.1-8b-instruct",
-        nvidia_api_key=get_nvidia_key(),
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-3.5-flash",
+        google_api_key=get_google_key(),
         temperature=0.1
     ).with_structured_output(RouterOutput)
 
@@ -77,9 +77,9 @@ async def agent_node(state: AgentState):
         tools_by_name[name] for name in available_tools if name in tools_by_name
     ]
     
-    llm = ChatNVIDIA(
-        model="meta/llama-3.3-70b-instruct",
-        nvidia_api_key=get_nvidia_key(),
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-3.5-flash",
+        google_api_key=get_google_key(),
         temperature=0.1,
         max_tokens=4096,
     )

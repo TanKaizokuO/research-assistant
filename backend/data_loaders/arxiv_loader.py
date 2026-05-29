@@ -1,13 +1,19 @@
 import os
+from dotenv import load_dotenv
 import re
 from langchain_community.utilities.arxiv import ArxivAPIWrapper
 from langchain_core.messages import HumanMessage
 from logger import get_logger
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from langchain_google_genai import ChatGoogleGenerativeAI
 from urllib.parse import urlparse
 
 logger = get_logger(__name__)
-SUMMARISER_MODEL = ChatNVIDIA(model="meta/llama-3.1-8b-instruct")
+load_dotenv()
+SUMMARISER_MODEL = ChatGoogleGenerativeAI(
+    model="gemini-3.5-flash",
+    google_api_key=os.getenv("GOOGLE_API_KEY"),
+    temperature=0.1
+)
 
 
 def extract_arxiv_id(url: str) -> str:

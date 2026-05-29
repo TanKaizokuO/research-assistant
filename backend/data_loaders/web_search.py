@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from calendar import c
 from re import S
 
@@ -13,7 +15,7 @@ from tavily import TavilyClient
 from datetime import datetime, timezone
 from output_schemas.schema import SourceSchema
 from typing import List
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.tools import tool
 from langchain_core.messages import HumanMessage
 
@@ -24,7 +26,12 @@ logger = get_logger(__name__)
 _EXTRACT_BATCH_SIZE = 5
 _EXTRACT_MAX_URLS = 20  # hard cap to stay within free-tier usage
 _SUMMARY_MAX_LENGTH = 2000  # must match SourceSchema.summary max_length
-SUMMARISER_MODEL = ChatNVIDIA(model="meta/llama-3.1-8b-instruct")
+load_dotenv()
+SUMMARISER_MODEL = ChatGoogleGenerativeAI(
+    model="gemini-3.5-flash",
+    google_api_key=os.getenv("GOOGLE_API_KEY"),
+    temperature=0.1
+)
 
 
 def manual_web_search(
