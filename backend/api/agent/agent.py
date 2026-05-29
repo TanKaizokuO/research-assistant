@@ -16,8 +16,7 @@ from api.agent.tools import research_topic, literature_review, citation_graph, i
 all_tools = [research_topic, literature_review, citation_graph, ingest_pdf]
 tools_by_name = {t.name: t for t in all_tools}
 
-# Maximum number of tool-call rounds before we force the agent to answer.
-# 3 rounds is enough for router → tool → synthesis while preventing runaway loops.
+# Maximum number of tool-call rounds before we force the agent to answer
 _MAX_TOOL_ROUNDS = 3
 
 class AgentState(TypedDict, total=False):
