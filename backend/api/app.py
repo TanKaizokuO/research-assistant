@@ -48,7 +48,6 @@ def create_app() -> FastAPI:
     # ── Health check ──────────────────────────────────────────────────────
     @app.get("/health", tags=["Health"])
     async def health():
-        """Lightweight liveness probe — returns 200 OK when the API is up."""
         return {"status": "ok"}
 
     # ── Global exception handler ──────────────────────────────────────────
