@@ -1,9 +1,6 @@
 """
 services package — shared LLM singleton used by all service modules.
 
-The singleton is configured with a low temperature (0.1) to favour
-deterministic, fact-grounded responses in research contexts.
-
 Import with:
     from services import LLM
 """
