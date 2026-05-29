@@ -56,7 +56,7 @@ def fetch_and_save_best_arxiv_paper(query: str):
     if not docs:
         raise ValueError("No documents found")
 
-    summaries_text = "\n\n".join(
+    summaries_block = "\n\n".join(
         [
             f"[{i}]\nTitle: {d.metadata.get('Title')}\nSummary: {d.page_content}"
             for i, d in enumerate(docs)
@@ -74,7 +74,7 @@ def fetch_and_save_best_arxiv_paper(query: str):
 Query: {query}
 
 Papers:
-{summaries_text}
+{summaries_block}
 
 Return ONLY the indices (integers) of the TOP 3 most relevant papers.
 Format strictly as: 0,2,4
