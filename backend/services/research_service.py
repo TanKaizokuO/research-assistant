@@ -63,27 +63,27 @@ async def run_research(req: ResearchRequest, tavily_key: str) -> ResearchRespons
     errors: List[str] = []
 
     # ── Fan-out: launch all enabled sources concurrently ──────────────────
-    task_map: dict[str, asyncio.Future] = {}
+    source_tasks: dict[str, asyncio.Future] = {}
 
     if req.include_web:
         # nvidia_api_key is optional in manual_web_search (defaults to None)
-        task_map["web"] = asyncio.to_thread(
+        source_tasks["web"] = asyncio.to_thread(
             manual_web_search,
             tavily_key,
             req.topic,
             req.max_web_results,
         )
     if req.include_arxiv:
-        task_map["arxiv"] = asyncio.to_thread(
+        source_tasks["arxiv"] = asyncio.to_thread(
             fetch_and_save_best_arxiv_paper, req.topic
         )
     if req.include_semantic_scholar:
-        task_map["ss"] = asyncio.to_thread(
+        source_tasks["ss"] = asyncio.to_thread(
             paper_search, req.topic, req.max_academic_results
         )
 
-    raw_results = await asyncio.gather(*task_map.values(), return_exceptions=True)
-    result_map: dict[str, object] = dict(zip(task_map.keys(), raw_results))
+    raw_results = await asyncio.gather(*source_tasks.values(), return_exceptions=True)
+    result_map: dict[str, object] = dict(zip(source_tasks.keys(), raw_results))
 
     # ── Unpack results safely ─────────────────────────────────────────────
     web_sources: List[SourceSchema] = []
