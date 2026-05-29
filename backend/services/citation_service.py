@@ -20,6 +20,7 @@ from services import LLM
 
 # Fields requested from the Semantic Scholar API
 PAPER_FIELDS = "title,abstract,year,authors,citationCount,openAccessPdf,externalIds,venue"
+# Lighter field set for graph edges — we don't need externalIds on references
 REF_FIELDS = "title,abstract,year,authors,citationCount,openAccessPdf,venue"
 
 
