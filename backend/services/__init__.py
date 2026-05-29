@@ -15,5 +15,3 @@ LLM = ChatGoogleGenerativeAI(
     google_api_key=os.getenv("GOOGLE_API_KEY"),
     temperature=0.1
 )
-
-__all__ = ["LLM"]
