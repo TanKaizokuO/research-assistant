@@ -1,53 +1,116 @@
-# Research Assistant FastAPI Backend
+# AI Research Assistant
 
-An AI-powered FastAPI backend providing intelligent research capabilities, literature reviews, and citation graph analysis. It integrates with Tavily for web searching, arXiv, Semantic Scholar, and uses NVIDIA LLMs via LangChain for reasoning and summarization.
+An AI-powered research assistant application featuring an interactive, real-time streaming chat interface and an agentic reasoning engine. The project is organized as a monorepo containing a FastAPI backend and a React 19 (TypeScript) frontend.
 
-## Features
+---
 
-1. **Topic Research (`/research/`)**: Fans out queries concurrently across the Web (Tavily), arXiv, and Semantic Scholar, then produces a comprehensive LLM-generated research brief based on the combined context.
-2. **Literature Review (`/literature/`)**:
-   - **Ingest**: Upload and ingest user-provided PDFs into a local ChromaDB vector store (`/literature/ingest`).
-   - **Review**: Generate structured academic literature reviews by querying the vector DB, optionally supplementing with arXiv and Semantic Scholar if more context is needed (`/literature/review`).
-3. **Citation & Reference Finder (`/citations/`)**: Resolves papers on Semantic Scholar to fetch both references (what the paper builds on) and citations (its impact), then generates a citation-landscape summary.
+## 📂 Project Structure
 
-## Setup & Installation
-
-1. Create a virtual environment and install dependencies:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
-
-2. Configure environment variables. Create a `.env` file in the project root with the following keys:
-   ```env
-   TAVILY_API_KEY=tvly-...
-   NVIDIA_API_KEY=nvapi-...
-   # SEMANTIC_SCHOLAR_API_KEY=... (Optional: increases rate limits if provided)
-   ```
-
-## Running the Server
-
-Start the application using `uvicorn` (recommended for development):
-```bash
-uvicorn api.app:app --host 0.0.0.0 --port 8000 --reload
+```text
+Research_Assistant/
+├── backend/            # FastAPI Application & AI Agent Logic
+│   ├── api/            # API routes and Agent definitions
+│   ├── data_loaders/   # Semantic Scholar, arXiv, and PDF parsing loaders
+│   ├── services/       # Literature review, citation and research service orchestrations
+│   └── requirements.txt
+├── frontend/           # React 19 + Vite + TypeScript Web Application
+│   ├── src/            # App components, styles, and assets
+│   └── package.json
+├── backend.md          # Technical documentation for the backend
+├── frontend.md         # Technical documentation for the frontend
+└── README.md           # General project documentation and setup guide
 ```
 
-Alternatively, run it via the main script:
-```bash
-python main.py
+---
+
+## 🛠️ Technology Stack
+
+### Backend
+* **Framework**: FastAPI
+* **Agent Orchestration**: LangGraph (`StateGraph`) with a ReAct architecture
+* **LLM Integration**: LangChain (`langchain_nvidia_ai_endpoints`) using `meta/llama-3.1-8b-instruct` (routing) and `meta/llama-3.3-70b-instruct` (reasoning)
+* **Vector Database**: ChromaDB (for local PDF embedding storage and search)
+* **Academic APIs**: Semantic Scholar, arXiv (via `langchain_community.utilities.arxiv`)
+* **Web Search**: Tavily Search API
+
+### Frontend
+* **Framework**: React 19 (TypeScript)
+* **Build Tool**: Vite
+* **Styling**: Vanilla CSS with custom dark mode theme
+* **Markdown Rendering**: `react-markdown`
+* **Icons**: `lucide-react`
+* **Real-time Communication**: Server-Sent Events (SSE) for streaming agent tokens and tool execution steps
+
+---
+
+## ✨ Features
+
+1. **Interactive ReAct Agent Chat**: Conversational AI interface that preserves session memory and displays tool invocations (`research_topic`, `literature_review`, etc.) in real-time as they run.
+2. **Topic Research**: Concurrently queries Tavily (Web Search), arXiv, and Semantic Scholar to synthesize a consolidated academic brief.
+3. **Literature Review**:
+   * **PDF Ingestion**: Upload and parse scientific PDFs, split text into chunks, and persist embeddings into ChromaDB.
+   * **Semantic Search**: Run search queries over local PDFs, falling back to external sources when necessary to draft a literature review.
+4. **Citation Network Explorer**: Traces references and citations of research papers to compile a landscape summary of their academic context and impact.
+
+---
+
+## ⚙️ Configuration & Environment Setup
+
+### Backend Environment Variables
+Create a `.env` file inside the `backend/` directory with the following keys:
+
+```env
+NVIDIA_API_KEY=nvapi-...
+TAVILY_API_KEY=tvly-...
+# Optional:
+SEMANTIC_SCHOLAR_API_KEY=... # Increases rate limits for Semantic Scholar
+LANGSMITH_API_KEY=...         # For tracing and debugging (if using LangSmith)
+LANGSMITH_PROJECT=...
 ```
 
-## API Documentation
+---
 
-Once the server is running, interactive API documentation is automatically generated and available at:
-- **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+## 🏃 Running the Application
 
-### Key Endpoints
+### 1. Setup & Start the Backend
 
-- `POST /research/` - Search and summarize a research topic.
-- `POST /literature/ingest` - Upload `.pdf` files for background ingestion.
-- `POST /literature/review` - Generate an academic literature review from ingested documents.
-- `POST /citations/` - Explore the citation and reference graph of a specific paper.
-- `GET /health` - API health check endpoint.
+Make sure you have Python 3.10+ installed.
+
+```bash
+# From the project root, set up virtual environment and install backend dependencies
+python -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements.txt
+
+# Run the backend server
+cd backend
+../.venv/bin/python main.py
+```
+
+The backend API will run on **`http://localhost:8000`**.
+
+* **Interactive Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
+* **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+### 2. Setup & Start the Frontend
+
+Make sure you have Node.js (v18+) and npm installed.
+
+```bash
+# Install dependencies
+cd frontend
+npm install
+
+# Run the frontend in development mode
+npm run dev
+```
+
+The web application will run on **`http://localhost:5173`**.
+
+---
+
+## 📖 Deep Dives
+
+For detailed component mappings, code structure, and design decisions, please refer to:
+* [Backend Current State Guide](file:///home/tankaizokuo/Code/Research_Assistant/backend.md)
+* [Frontend Current State Guide](file:///home/tankaizokuo/Code/Research_Assistant/frontend.md)
