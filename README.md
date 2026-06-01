@@ -111,6 +111,6 @@ The web application will run on **`http://localhost:5173`**.
 
 ## 📖 Deep Dives
 
-For detailed component mappings, code structure, and design decisions, please refer to:
+For detailed component mappings, code structure, and design decisions, please refer to the following:
 * [Backend Current State Guide](file:///home/tankaizokuo/Code/Research_Assistant/backend.md)
 * [Frontend Current State Guide](file:///home/tankaizokuo/Code/Research_Assistant/frontend.md)
