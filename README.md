@@ -40,3 +40,57 @@
 - **Vite** - Lightning-fast build tool
 - **Tailwind CSS / Vanilla CSS** - Custom dark mode themes
 - **Server-Sent Events (SSE)** - Real-time streaming
+
+---
+
+## Getting Started
+
+To get a local copy up and running, follow these simple steps.
+
+### Prerequisites
+
+- **Node.js**: v18.0.0 or higher
+- **npm**: v8.0.0 or higher
+- **Python**: v3.10.0 or higher
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/research-assistant.git
+   cd research-assistant
+   ```
+
+2. **Backend Setup**
+   ```bash
+   # Navigate to the backend directory
+   cd backend
+
+   # Create and activate a virtual environment
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
+
+   # Install Python dependencies
+   pip install -r requirements.txt
+   ```
+
+3. **Backend Environment Variables**
+   Create a `.env` file in the `backend/` directory and configure your API keys:
+   ```env
+   NVIDIA_API_KEY=your_nvidia_api_key_here
+   TAVILY_API_KEY=your_tavily_api_key_here
+   SEMANTIC_SCHOLAR_API_KEY=your_semantic_scholar_api_key_here # Optional
+   ```
+
+4. **Frontend Setup**
+   ```bash
+   # Navigate to the frontend directory
+   cd ../frontend
+
+   # Install Node dependencies
+   npm install
+   ```
+
+5. **Start the Application**
+   - **Backend Server**: run `python main.py` in the `backend/` directory (ensure venv is active). It will start on `http://localhost:8000`.
+   - **Frontend App**: run `npm run dev` in the `frontend/` directory. It will start on `http://localhost:5173`.
