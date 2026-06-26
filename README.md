@@ -97,19 +97,6 @@ To get a local copy up and running, follow these simple steps.
 
 ---
 
-## Usage
-
-Once the application is running, navigate to `http://localhost:5173` in your web browser. 
-
-*Add code examples, diagrams, or screenshots here to demonstrate how users can leverage the AI Research Assistant effectively.*
-
-![App Screenshot Placeholder](https://via.placeholder.com/800x400?text=App+Screenshot)
-
-* Example Use Case 1: Searching for recent papers on LLM agents.
-* Example Use Case 2: Uploading a local PDF to perform a deep-dive literature review.
-
----
-
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
