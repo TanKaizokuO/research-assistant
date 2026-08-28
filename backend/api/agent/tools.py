@@ -73,8 +73,12 @@ async def literature_review(topic: str) -> str:
         response = await run_literature_review(req, tavily_key)
         sources_list = []
         for i, c in enumerate(response.db_chunks):
+            page_str = f"p.{c.page_start}" if c.page_start else "p.?"
+            if c.page_end and c.page_end != c.page_start:
+                page_str += f"-{c.page_end}"
             sources_list.append(
-                f"Primary PDF Chunk [{i+1}]: \"{c.title}\" by {c.authors or 'Unknown'} ({c.year or 'N/A'})."
+                f"Primary PDF Chunk [{i+1}]: \"{c.title}\" by {c.authors or 'Unknown'} "
+                f"({c.year or 'N/A'}) \u2014 Section: {c.section}, {page_str}."
             )
         for i, a in enumerate(response.supplementary_papers):
             authors_str = ", ".join(a.authors) if a.authors else "Unknown"

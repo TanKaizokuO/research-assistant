@@ -45,5 +45,5 @@ async def literature_review(
 ):
     """Query the vector DB for relevant chunks, optionally supplement with
     arXiv / Semantic Scholar results, and generate a structured literature
-    review using the NVIDIA LLM."""
+    review using the Gemini LLM."""
     return await run_literature_review(req, tavily_key)

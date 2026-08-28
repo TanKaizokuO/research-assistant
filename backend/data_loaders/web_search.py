@@ -15,7 +15,7 @@ from tavily import TavilyClient
 from datetime import datetime, timezone
 from output_schemas.schema import SourceSchema
 from typing import List
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from langchain.tools import tool
 from langchain_core.messages import HumanMessage
 
@@ -27,9 +27,10 @@ _EXTRACT_BATCH_SIZE = 5
 _EXTRACT_MAX_URLS = 20  # hard cap to stay within free-tier usage
 _SUMMARY_MAX_LENGTH = 2000  # must match SourceSchema.summary max_length
 load_dotenv()
-SUMMARISER_MODEL = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
-    google_api_key=os.getenv("GOOGLE_API_KEY"),
+SUMMARISER_MODEL = ChatOpenAI(
+    model="openai/gpt-oss-20b",
+    base_url="https://integrate.api.nvidia.com/v1",
+    api_key=os.getenv("NVIDIA_API_KEY"),
     temperature=0.1
 )
 
@@ -38,7 +39,6 @@ def manual_web_search(
     tavily_api_key: str,
     query: str,
     max_results: int = 5,
-    nvidia_api_key: str = None,
 ) -> List[SourceSchema]:
     """Search the web with Tavily and return normalized source records.
 
@@ -52,8 +52,6 @@ def manual_web_search(
         tavily_api_key (str): Tavily API key used for search and extraction.
         query (str): User query used to retrieve relevant web sources.
         max_results (int): Maximum number of ranked search results requested.
-        nvidia_api_key (str): Optional NVIDIA API key placeholder for tool
-            compatibility; currently not required by this function.
 
     Example:
         sources = manual_web_search(

@@ -23,7 +23,7 @@ def create_app() -> FastAPI:
         version="1.0.0",
         description=(
             "AI-powered research, literature review, and citation finder "
-            "backed by Tavily, arXiv, Semantic Scholar, and NVIDIA LLMs."
+            "backed by Tavily, arXiv, Semantic Scholar, and Google Gemini LLMs."
         ),
     )
 

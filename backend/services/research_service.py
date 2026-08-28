@@ -66,7 +66,6 @@ async def run_research(req: ResearchRequest, tavily_key: str) -> ResearchRespons
     task_map: dict[str, asyncio.Future] = {}
 
     if req.include_web:
-        # nvidia_api_key is optional in manual_web_search (defaults to None)
         task_map["web"] = asyncio.to_thread(
             manual_web_search,
             tavily_key,

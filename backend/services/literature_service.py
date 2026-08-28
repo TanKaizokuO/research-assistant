@@ -6,6 +6,7 @@ literature review generation (vector DB query + optional supplementation
 from arXiv / Semantic Scholar + LLM prose generation).
 """
 import asyncio
+import os
 import re
 import shutil
 from pathlib import Path
@@ -23,8 +24,8 @@ from services.research_service import AcademicHit  # reuse shared model
 
 # ── Directory constants ────────────────────────────────────────────────────
 
-PDF_DIR = Path("pdf-from-user")
-DB_DIR = Path("chroma_db")
+PDF_DIR = Path(os.getenv("PDF_UPLOAD_DIR", "pdf-from-user"))
+DB_DIR = Path(os.getenv("CHROMA_DB_DIR", "chroma_db"))
 COLLECTION = "literature_db"
 
 
@@ -47,6 +48,9 @@ class LiteratureChunk(BaseModel):
     year: str
     doi: str
     filename: str
+    section: str = Field(default="Unknown", description="Detected paper section, e.g. 'Methods'")
+    page_start: int = Field(default=0, description="First page (1-indexed) the chunk originates from")
+    page_end: int = Field(default=0, description="Last page (1-indexed) the chunk originates from")
 
 
 class LiteratureResponse(BaseModel):
@@ -123,6 +127,9 @@ async def run_literature_review(req: LiteratureRequest, tavily_key: str) -> Lite
             year=str(h["metadata"].get("year", "")),
             doi=h["metadata"].get("doi", ""),
             filename=h["metadata"].get("filename", ""),
+            section=h["metadata"].get("section", "Unknown"),
+            page_start=int(h["metadata"].get("page_start") or 0),
+            page_end=int(h["metadata"].get("page_end") or 0),
         )
         for h in raw_hits
     ]
@@ -188,7 +195,9 @@ async def run_literature_review(req: LiteratureRequest, tavily_key: str) -> Lite
     # ── Step 3: Build LLM context ──────────────────────────────────────────
     chunk_context = "\n\n".join(
         [
-            f"[From: \"{c.title}\" by {c.authors or 'Unknown'} ({c.year or 'N/A'})]\n{c.text[:600]}"
+            f"[From: \"{c.title}\" by {c.authors or 'Unknown'} ({c.year or 'N/A'}) "
+            f"\u2014 Section: {c.section}, p.{c.page_start}"
+            f"{'-' + str(c.page_end) if c.page_end and c.page_end != c.page_start else ''}]\n{c.text[:600]}"
             for c in db_chunks[:8]
         ]
     )
@@ -215,7 +224,9 @@ async def run_literature_review(req: LiteratureRequest, tavily_key: str) -> Lite
         f"PRIMARY SOURCES (from user PDFs):\n{chunk_context or 'None provided'}\n\n"
         f"SUPPLEMENTARY SOURCES:\n{sup_context or 'None'}\n"
         "---\n\n"
-        "Do not invent citations. Use author names and years where available."
+        "Do not invent citations. Use author names and years where available. "
+        "When citing a PRIMARY SOURCE (from user PDFs), reference its section and "
+        "page number as given (e.g. \"(Smith 2021, Methods, p.4)\")."
     )
 
     try:

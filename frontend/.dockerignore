@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-ssr
+.venv
+__pycache__
+.git
+.gitignore
+.dockerignore
+.env
+.env.*
+chroma_db
+pdf-from-user

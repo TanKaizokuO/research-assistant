@@ -1,0 +1,50 @@
+# Docker Compose configuration for Research Assistant portfolio application
+
+services:
+  # TODO(sonnet): backend currently uses chromadb.PersistentClient against local disk; point it at the chromadb service via chromadb.HttpClient(host="chromadb", port=8000) for this compose setup to fully take effect, or keep a named volume mount at backend's chroma_db path instead
+  # Standalone ChromaDB vector database service
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: research_assistant_chromadb
+    volumes:
+      - chroma_data:/chroma/chroma
+    ports:
+      - "8001:8000"
+    restart: unless-stopped
+
+  # FastAPI + LangGraph Agent Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: research_assistant_backend
+    depends_on:
+      - chromadb
+    env_file:
+      - path: ./backend/.env
+        required: false
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount point for local PDF uploads from users
+      - ./backend/pdf-from-user:/app/pdf-from-user
+      # Mount point for local persistent vector DB storage
+      - ./backend/chroma_db:/app/chroma_db
+    restart: unless-stopped
+
+  # Vite + React Static Frontend Service served via Nginx proxy
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: research_assistant_frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    restart: unless-stopped
+
+# Named persistent volumes
+volumes:
+  chroma_data:
+    driver: local

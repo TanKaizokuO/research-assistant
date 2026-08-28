@@ -1,19 +1,19 @@
+import hashlib
+import json
+import logging
 import os
 import re
-import json
-import hashlib
-import logging
-from pathlib import Path
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional
 
-import pdfplumber
-from pypdf import PdfReader
-from sentence_transformers import SentenceTransformer
 import chromadb
 from chromadb.config import Settings
+import pdfplumber
+from pypdf import PdfReader
+from rank_bm25 import BM25Okapi
+from sentence_transformers import CrossEncoder, SentenceTransformer
 from tqdm import tqdm
-from pathlib import Path
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
@@ -22,6 +22,7 @@ DB_DIR = Path("vector_db")
 COLLECTION = "literature_review"
 
 EMBED_MODEL = "BAAI/bge-base-en"
+RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 # Chunking — tuned for academic papers
 CHUNK_SIZE = 512  # tokens (approx chars / 4)
@@ -29,6 +30,34 @@ CHUNK_OVERLAP = 80  # overlap keeps context across chunk boundaries
 
 # BGE models need this prefix for retrieval tasks
 BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
+
+SECTION_HEADINGS = [
+    "Abstract",
+    "Introduction",
+    "Related Work",
+    "Background",
+    "Motivation",
+    "Method",
+    "Methods",
+    "Methodology",
+    "Approach",
+    "System Design",
+    "Experiments",
+    "Experimental Setup",
+    "Evaluation",
+    "Results",
+    "Discussion",
+    "Analysis",
+    "Limitations",
+    "Conclusion",
+    "Conclusions",
+    "Future Work",
+    "Acknowledgments",
+    "Acknowledgements",
+    "References",
+    "Bibliography",
+    "Appendix",
+]
 
 logging.basicConfig(
     level=logging.INFO,
@@ -60,6 +89,9 @@ class Chunk:
     text: str
     chunk_idx: int
     meta: PaperMeta
+    section: str = "Unknown"
+    page_start: int = 0
+    page_end: int = 0
     chunk_id: str = field(init=False)
 
     def __post_init__(self):
@@ -137,7 +169,7 @@ def extract_metadata(path: Path) -> PaperMeta:
     return meta
 
 
-# ── Text cleaning & chunking ──────────────────────────────────────────────────
+# ── Text cleaning & section-aware chunking ───────────────────────────────────
 
 
 def clean_text(text: str) -> str:
@@ -150,6 +182,99 @@ def clean_text(text: str) -> str:
     text = re.sub(r"\n{3,}", "\n\n", text)  # ≥3 blank lines → 2
     text = re.sub(r"[ \t]{2,}", " ", text)  # multiple spaces
     return text.strip()
+
+
+def _detect_section_heading(line: str) -> Optional[str]:
+    """
+    Heuristically detect canonical academic section headings in a line of text.
+    Strips leading numbers/roman numerals and matches against SECTION_HEADINGS.
+    """
+    s_line = line.strip()
+    if not s_line:
+        return None
+
+    # Headings rarely end with a period
+    if s_line.endswith("."):
+        return None
+
+    # Headings are short (<= ~8 words)
+    words = s_line.split()
+    if len(words) > 8:
+        return None
+
+    # Strip leading number/roman-numeral/period pattern (e.g. "3.", "III.", "3.2", "Section 3.")
+    cleaned = re.sub(
+        r"^(?:(?:Section|Sec\.|Chapter|Chap\.)\s+)?(?:[0-9]+(?:\.[0-9]+)*|[IVXLCDM]+(?:\.[IVXLCDM]+)*|[A-Z]\.)[\.\s]*",
+        "",
+        s_line,
+        flags=re.IGNORECASE,
+    ).strip()
+    if not cleaned:
+        cleaned = s_line
+
+    cleaned_lower = cleaned.lower()
+
+    # Exact match check first
+    for heading in SECTION_HEADINGS:
+        if cleaned_lower == heading.lower():
+            return heading
+
+    # Startswith check (sorted longest heading first to avoid false sub-prefix matches)
+    sorted_headings = sorted(SECTION_HEADINGS, key=len, reverse=True)
+    for heading in sorted_headings:
+        h_lower = heading.lower()
+        if cleaned_lower.startswith(h_lower):
+            match_len = len(h_lower)
+            if match_len == len(cleaned_lower) or not cleaned_lower[match_len].isalnum():
+                return heading
+
+    return None
+
+
+def _extract_line_stream(path: Path) -> list[tuple[int, str]]:
+    """Build a flat list of (page_num, line) tuples (1-indexed page_num)."""
+    pages = extract_text_pdfplumber(path)
+    stream: list[tuple[int, str]] = []
+    for page_idx, page_text in enumerate(pages, start=1):
+        lines = page_text.splitlines()
+        for line in lines:
+            stream.append((page_idx, line))
+    return stream
+
+
+def _extract_segments(
+    line_stream: list[tuple[int, str]]
+) -> list[tuple[str, int, int, str]]:
+    """
+    Group line stream into contiguous section segments:
+    (section_name, page_start, page_end, cleaned_text).
+    """
+    segments: list[tuple[str, int, int, str]] = []
+    current_section = "Front Matter"
+    current_lines: list[tuple[int, str]] = []
+
+    def flush():
+        nonlocal current_lines, current_section
+        if not current_lines:
+            return
+        raw_text = "\n".join(line for _, line in current_lines)
+        cleaned_body = clean_text(raw_text)
+        if cleaned_body:
+            p_start = current_lines[0][0]
+            p_end = current_lines[-1][0]
+            segments.append((current_section, p_start, p_end, cleaned_body))
+        current_lines = []
+
+    for page_num, line in line_stream:
+        heading = _detect_section_heading(line)
+        if heading is not None:
+            flush()
+            current_section = heading
+        else:
+            current_lines.append((page_num, line))
+
+    flush()
+    return segments
 
 
 def chunk_text(
@@ -192,18 +317,61 @@ def chunk_text(
 
 
 def pdf_to_chunks(path: Path) -> tuple[PaperMeta, list[Chunk]]:
+    """
+    Page and section aware PDF parsing and chunking pipeline.
+    """
     meta = extract_metadata(path)
-    pages = extract_text_pdfplumber(path)
-    full = clean_text("\n\n".join(pages))
+    line_stream = _extract_line_stream(path)
+    segments = _extract_segments(line_stream)
 
-    raw_chunks = chunk_text(full)
-    chunks = [
-        Chunk(text=text, chunk_idx=i, meta=meta) for i, text in enumerate(raw_chunks)
-    ]
+    chunks: list[Chunk] = []
+    chunk_idx = 0
+
+    for section_name, seg_p_start, seg_p_end, seg_text in segments:
+        seg_len = len(seg_text)
+        raw_chunks = chunk_text(seg_text)
+
+        search_pos = 0
+        for c in raw_chunks:
+            # Approximate per-chunk page range by proportionally mapping character offset
+            # within segment text to segment page range (linear interpolation).
+            # This is an approximation.
+            c_pos = seg_text.find(c, search_pos)
+            if c_pos != -1:
+                search_pos = c_pos
+            else:
+                c_pos = seg_text.find(c)
+                if c_pos == -1:
+                    c_pos = 0
+
+            c_end = c_pos + len(c)
+
+            if seg_len > 0 and seg_p_end > seg_p_start:
+                start_ratio = c_pos / seg_len
+                end_ratio = c_end / seg_len
+                p_start = int(round(seg_p_start + start_ratio * (seg_p_end - seg_p_start)))
+                p_end = int(round(seg_p_start + end_ratio * (seg_p_end - seg_p_start)))
+                p_start = max(seg_p_start, min(seg_p_end, p_start))
+                p_end = max(p_start, min(seg_p_end, p_end))
+            else:
+                p_start = seg_p_start
+                p_end = seg_p_end
+
+            chunk_obj = Chunk(
+                text=c,
+                chunk_idx=chunk_idx,
+                meta=meta,
+                section=section_name,
+                page_start=p_start,
+                page_end=p_end,
+            )
+            chunks.append(chunk_obj)
+            chunk_idx += 1
+
     return meta, chunks
 
 
-# ── Embedding ─────────────────────────────────────────────────────────────────
+# ── Embedding & Reranking ─────────────────────────────────────────────────────
 
 
 class BGEEmbedder:
@@ -228,7 +396,67 @@ class BGEEmbedder:
         return vec.tolist()
 
 
-# ── Vector DB ─────────────────────────────────────────────────────────────────
+_EMBEDDER_INSTANCE: Optional["BGEEmbedder"] = None
+
+
+def _get_embedder() -> "BGEEmbedder":
+    """Lazily load and cache the embedding model (avoids reloading it on every call)."""
+    global _EMBEDDER_INSTANCE
+    if _EMBEDDER_INSTANCE is None:
+        _EMBEDDER_INSTANCE = BGEEmbedder()
+    return _EMBEDDER_INSTANCE
+
+_RERANKER_INSTANCE: Optional[CrossEncoder] = None
+
+
+def _get_reranker() -> CrossEncoder:
+    """Lazily load and cache the cross-encoder reranker model."""
+    global _RERANKER_INSTANCE
+    if _RERANKER_INSTANCE is None:
+        log.info("Loading reranker model: %s", RERANK_MODEL)
+        _RERANKER_INSTANCE = CrossEncoder(RERANK_MODEL)
+        log.info("Reranker model loaded")
+    return _RERANKER_INSTANCE
+
+
+# ── Vector DB & BM25 Index ────────────────────────────────────────────────────
+
+_BM25_CACHE: dict[tuple[str, str], dict] = {}
+
+
+def _tokenize(text: str) -> list[str]:
+    return re.findall(r"[a-z0-9]+", text.lower())
+
+
+def _build_bm25_index(db_dir: Path, collection: str, col) -> dict:
+    res = col.get(include=["documents", "metadatas"])
+    ids = res.get("ids") or []
+    docs = res.get("documents") or []
+    metas = res.get("metadatas") or []
+
+    tokenized_corpus = [_tokenize(doc) for doc in docs]
+    bm25 = BM25Okapi(tokenized_corpus) if tokenized_corpus else None
+
+    entry = {
+        "count": len(ids),
+        "bm25": bm25,
+        "ids": ids,
+        "docs": docs,
+        "metas": metas,
+    }
+    cache_key = (str(Path(db_dir).resolve()), str(collection))
+    _BM25_CACHE[cache_key] = entry
+    return entry
+
+
+def _get_bm25_index(db_dir: Path, collection: str, col) -> dict:
+    cache_key = (str(Path(db_dir).resolve()), str(collection))
+    current_count = col.count()
+    if cache_key in _BM25_CACHE:
+        entry = _BM25_CACHE[cache_key]
+        if entry["count"] == current_count:
+            return entry
+    return _build_bm25_index(db_dir, collection, col)
 
 
 def get_collection(db_dir: Path = DB_DIR, collection: str = COLLECTION):
@@ -261,15 +489,15 @@ def ingest_pdfs(
     force: bool = False,
 ) -> dict:
     """
-    Main entry point.  Returns a summary dict.
+    Main entry point. Returns a summary dict.
 
     Parameters
     ----------
-    pdf_dir    : folder containing PDFs
-    db_dir     : where ChromaDB is persisted
+    pdf_dir : folder containing PDFs
+    db_dir : where ChromaDB is persisted
     collection : ChromaDB collection name
     batch_size : embedding batch size
-    force      : re-ingest even if file hash already present
+    force : re-ingest even if file hash already present
     """
     if not pdf_dir.exists():
         pdf_dir.mkdir(parents=True)
@@ -283,7 +511,7 @@ def ingest_pdfs(
 
     log.info("Found %d PDF(s) in %s", len(pdf_files), pdf_dir)
 
-    embedder = BGEEmbedder()
+    embedder = _get_embedder()
     _, col = get_collection(db_dir, collection)
     ingested, skipped = 0, 0
     errors: list[str] = []
@@ -317,6 +545,9 @@ def ingest_pdfs(
                     "pages": c.meta.pages,
                     "file_hash": c.meta.file_hash,
                     "chunk_idx": c.chunk_idx,
+                    "section": c.section,
+                    "page_start": c.page_start,
+                    "page_end": c.page_end,
                 }
                 for c in chunks
             ]
@@ -368,7 +599,7 @@ def ingest_pdfs(
     return summary
 
 
-# ── Query helper (for testing / downstream use) ───────────────────────────────
+# ── Query helper ──────────────────────────────────────────────────────────────
 
 
 def query_db(
@@ -378,39 +609,122 @@ def query_db(
     collection: str = COLLECTION,
 ) -> list[dict]:
     """
-    Semantic search over the vector DB.
-    Returns list of {text, score, metadata} dicts sorted by relevance.
-
-    Example
-    -------
-    results = query_db("transformer attention mechanism survey")
-    for r in results:
-        print(r["metadata"]["title"], "—", r["score"])
-        print(r["text"][:200])
+    Hybrid (BM25 + dense embedding) search with cross-encoder reranking over vector DB.
+    Returns list of {text, score, metadata} dicts sorted by reranked relevance.
     """
-    embedder = BGEEmbedder()
     _, col = get_collection(db_dir, collection)
+    total_docs = col.count()
+
+    if total_docs == 0:
+        return []
+
+    candidate_k = max(n_results * 3, 20)
+    candidate_k = min(candidate_k, total_docs)
+
+    # --- a. Dense pass ---
+    embedder = _get_embedder()
     query_vec = embedder.embed_query(query)
 
     res = col.query(
         query_embeddings=[query_vec],
-        n_results=n_results,
+        n_results=candidate_k,
         include=["documents", "metadatas", "distances"],
     )
 
+    dense_ids = res["ids"][0] if res.get("ids") and res["ids"] else []
+    dense_docs = res["documents"][0] if res.get("documents") and res["documents"] else []
+    dense_metas = res["metadatas"][0] if res.get("metadatas") and res["metadatas"] else []
+
+    doc_map: dict[str, dict] = {}
+    for doc_id, doc_text, meta in zip(dense_ids, dense_docs, dense_metas):
+        doc_map[doc_id] = {"text": doc_text, "metadata": meta}
+
+    dense_rank_map = {doc_id: rank for rank, doc_id in enumerate(dense_ids)}
+
+    # --- b. BM25 pass ---
+    bm25_entry = _get_bm25_index(db_dir, collection, col)
+    bm25_ids: list[str] = []
+    bm25_rank_map: dict[str, int] = {}
+
+    if bm25_entry["bm25"] is not None and bm25_entry["docs"]:
+        tokenized_query = _tokenize(query)
+        bm25_scores = bm25_entry["bm25"].get_scores(tokenized_query)
+        # Top candidate_k indices by BM25 score
+        top_bm25_indices = sorted(
+            range(len(bm25_scores)),
+            key=lambda i: bm25_scores[i],
+            reverse=True,
+        )[:candidate_k]
+
+        for rank, idx in enumerate(top_bm25_indices):
+            b_id = bm25_entry["ids"][idx]
+            b_doc = bm25_entry["docs"][idx]
+            b_meta = bm25_entry["metas"][idx]
+
+            bm25_ids.append(b_id)
+            bm25_rank_map[b_id] = rank
+            if b_id not in doc_map:
+                doc_map[b_id] = {"text": b_doc, "metadata": b_meta}
+
+    # --- c. Reciprocal Rank Fusion (RRF) ---
+    candidate_ids = list(set(dense_ids) | set(bm25_ids))
+    if not candidate_ids:
+        return []
+
+    rrf_scores: dict[str, float] = {}
+    for cid in candidate_ids:
+        score = 0.0
+        if cid in dense_rank_map:
+            score += 1.0 / (60.0 + dense_rank_map[cid])
+        if cid in bm25_rank_map:
+            score += 1.0 / (60.0 + bm25_rank_map[cid])
+        rrf_scores[cid] = score
+
+    fused_candidates = sorted(
+        candidate_ids,
+        key=lambda cid: (rrf_scores[cid], cid),
+        reverse=True,
+    )[:candidate_k]
+
+    if not fused_candidates:
+        return []
+
+    # --- d. Cross-encoder rerank pass ---
+    pairs = [(query, doc_map[cid]["text"]) for cid in fused_candidates]
+    reranker = _get_reranker()
+    raw_rerank_scores = reranker.predict(pairs)
+
+    if isinstance(raw_rerank_scores, (float, int)):
+        rerank_scores = [float(raw_rerank_scores)]
+    else:
+        rerank_scores = [float(s) for s in raw_rerank_scores]
+
+    scored_candidates = list(zip(fused_candidates, rerank_scores))
+    scored_candidates.sort(key=lambda item: item[1], reverse=True)
+    top_results = scored_candidates[:n_results]
+
+    # --- e. Build final output list ---
     hits = []
-    for doc, meta, dist in zip(
-        res["documents"][0],
-        res["metadatas"][0],
-        res["distances"][0],
-    ):
+    for cid, r_score in top_results:
+        doc_info = doc_map[cid]
+        d_rank = dense_rank_map.get(cid, None)
+        b_rank = bm25_rank_map.get(cid, None)
+        r_score_val = rrf_scores[cid]
+
+        hit_meta = {
+            **doc_info["metadata"],
+            "dense_rank": d_rank,
+            "bm25_rank": b_rank,
+            "rrf_score": round(float(r_score_val), 4),
+        }
         hits.append(
             {
-                "text": doc,
-                "score": round(1 - dist, 4),  # cosine similarity
-                "metadata": meta,
+                "text": doc_info["text"],
+                "score": round(float(r_score), 4),
+                "metadata": hit_meta,
             }
         )
+
     return hits
 
 

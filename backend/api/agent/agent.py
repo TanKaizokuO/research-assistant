@@ -4,17 +4,20 @@ api/agent/agent.py — Builds and runs the LangGraph agent.
 import json
 from typing import TypedDict, Annotated, List, Sequence
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, ToolMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field
 
-from api.dependencies import get_google_key
+from api.dependencies import get_nvidia_key
 from api.agent.tools import research_topic, literature_review, citation_graph, ingest_pdf
 
 # Global tools
 all_tools = [research_topic, literature_review, citation_graph, ingest_pdf]
 tools_by_name = {t.name: t for t in all_tools}
+
+NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
+KIMI_MODEL = "openai/gpt-oss-20b"
 
 # Maximum number of tool-call rounds before we force the agent to answer
 _MAX_TOOL_ROUNDS = 3
@@ -37,9 +40,10 @@ async def router_node(state: AgentState):
     if not last_human_msg:
         return {"available_tools": [t.name for t in all_tools]}
 
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        api_key=get_google_key(),
+    llm = ChatOpenAI(
+        model=KIMI_MODEL,
+        base_url=NVIDIA_BASE_URL,
+        api_key=get_nvidia_key(),
         temperature=0.1
     ).with_structured_output(RouterOutput)
 
@@ -77,9 +81,10 @@ async def agent_node(state: AgentState):
         tools_by_name[name] for name in available_tools if name in tools_by_name
     ]
     
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        api_key=get_google_key(),
+    llm = ChatOpenAI(
+        model=KIMI_MODEL,
+        base_url=NVIDIA_BASE_URL,
+        api_key=get_nvidia_key(),
         temperature=0.1,
         max_tokens=4096,
     )

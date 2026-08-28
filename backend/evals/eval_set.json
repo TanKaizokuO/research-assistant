@@ -1,0 +1,177 @@
+[
+  {
+    "id": "eval_01",
+    "query": "Retrieval-Augmented Generation (RAG) architectural patterns and modular RAG advancements",
+    "endpoint": "research",
+    "expected_keywords": ["RAG", "retrieval", "vector database", "dense retrieval", "generation"],
+    "ground_truth": "Retrieval-Augmented Generation (RAG) enhances LLM outputs by fetching relevant external context from vector databases or indices before text generation. Modular RAG advances traditional naive pipelines by adding query transformation, routing, reranking (e.g. via cross-encoders), and iterative/adaptive retrieval loops. This mitigates hallucination and enables language models to access real-time or domain-specific knowledge."
+  },
+  {
+    "id": "eval_02",
+    "query": "How does scaled dot-product attention compute token dependencies in Transformer models?",
+    "endpoint": "literature",
+    "expected_keywords": ["attention", "Query", "Key", "Value", "softmax", "scaling factor"],
+    "ground_truth": "Scaled dot-product attention computes interactions between queries (Q) and keys (K) scaled by the square root of the key dimension (sqrt(d_k)), followed by a softmax function to obtain attention weights. These weights are multiplied by values (V) to generate context-aware vector representations. Scaling prevents vanishing gradients in softmax when feature dimensions are large."
+  },
+  {
+    "id": "eval_03",
+    "query": "LoRA parameter-efficient fine-tuning vs full fine-tuning trade-offs",
+    "endpoint": "research",
+    "expected_keywords": ["LoRA", "low-rank", "rank matrix", "adapter", "parameter-efficient"],
+    "ground_truth": "Low-Rank Adaptation (LoRA) freezes pretrained model weights and injects trainable rank decomposition matrices (A and B) into transformer layers. This reduces trainable parameter count and memory overhead by orders of magnitude while matching full fine-tuning accuracy across downstream tasks. It also enables modular deployment by switching small adapter weights for different tasks."
+  },
+  {
+    "id": "eval_04",
+    "query": "Direct Preference Optimization (DPO) vs PPO in Reinforcement Learning from Human Feedback",
+    "endpoint": "literature",
+    "expected_keywords": ["DPO", "PPO", "RLHF", "reward model", "implicit reward"],
+    "ground_truth": "Direct Preference Optimization (DPO) replaces the complex actor-critic PPO pipeline in RLHF by reparameterizing the reward function directly using the policy's log-likelihood ratio. DPO avoids training a separate reward model or tuning unstable reinforcement learning hyperparameters. This provides a simpler, stable classification-based loss that aligns LLM outputs with human preference data."
+  },
+  {
+    "id": "eval_05",
+    "query": "Score-based generative modeling and classifier-free guidance in diffusion models",
+    "endpoint": "research",
+    "expected_keywords": ["diffusion", "score function", "denoising", "guidance", "latent diffusion"],
+    "ground_truth": "Diffusion models generate samples by learning a reverse denoising process that converts Gaussian noise into clean data using score matching or noise prediction networks. Classifier-free guidance trades off sample diversity for visual quality and text alignment by jointly conditioning and unconditioning the model during training and sampling. This technique underpins modern image generators like Stable Diffusion and Imagen."
+  },
+  {
+    "id": "eval_06",
+    "query": "Contrastive learning representations: SimCLR vs CLIP visual-language pre-training",
+    "endpoint": "literature",
+    "expected_keywords": ["contrastive", "InfoNCE", "SimCLR", "CLIP", "embedding space"],
+    "ground_truth": "Contrastive learning aligns vector representations by maximizing similarity between positive pairs while minimizing similarity with negative pairs using losses like InfoNCE. SimCLR applies data augmentations to single images to learn unsupervised visual features, whereas CLIP uses cross-modal contrastive pre-training on image-text pairs. CLIP enables zero-shot text-image retrieval and classification by projecting both modalities into a shared joint embedding space."
+  },
+  {
+    "id": "eval_07",
+    "query": "Graph Neural Networks message passing architecture and over-smoothing problem",
+    "endpoint": "research",
+    "expected_keywords": ["GNN", "message passing", "adjacency matrix", "over-smoothing", "node embeddings"],
+    "ground_truth": "Graph Neural Networks (GNNs) aggregate and transform neighbor node features iteratively using message passing functions across graph structure. Deep GNNs suffer from over-smoothing, where node representations converge to identical vectors as layer count increases. Techniques like residual connections, GraphSAGE neighbor sampling, and DropEdge help preserve spatial distinguishability in deep architectures."
+  },
+  {
+    "id": "eval_08",
+    "query": "Federated learning differential privacy and Secure Aggregation protocols",
+    "endpoint": "literature",
+    "expected_keywords": ["federated learning", "FedAvg", "differential privacy", "Secure Aggregation", "client drift"],
+    "ground_truth": "Federated Learning (FL) trains machine learning models across decentralized edge devices using local data without centralizing raw data, aggregating parameter updates via FedAvg. To protect client gradient privacy against inference attacks, FL integrates differential privacy (adding calibrated noise) and Secure Aggregation protocols. Secure Aggregation ensures the central server can only inspect the sum of model updates, not individual client gradients."
+  },
+  {
+    "id": "eval_09",
+    "query": "Few-shot learning via in-context learning vs meta-learning approaches",
+    "endpoint": "research",
+    "expected_keywords": ["few-shot", "in-context learning", "meta-learning", "MAML", "prompting"],
+    "ground_truth": "Few-shot learning enables models to generalize to novel tasks using only a few training examples. Gradient-based meta-learning methods like MAML explicitly train model initializations for fast adaptation via fine-tuning steps, whereas LLM in-context learning achieves few-shot performance purely through prompt context formatting without updating model weights. In-context learning relies on pretrained transformer pattern matching rather than explicit parameter updates."
+  },
+  {
+    "id": "eval_10",
+    "query": "Chain-of-Thought prompting mechanisms for multi-step reasoning in LLMs",
+    "endpoint": "literature",
+    "expected_keywords": ["Chain-of-Thought", "CoT", "multi-step reasoning", "prompting", "Tree of Thoughts"],
+    "ground_truth": "Chain-of-Thought (CoT) prompting guides large language models to decompose complex reasoning tasks into intermediate natural language step-by-step reasoning sequences before providing a final answer. Extensions like Self-Consistency and Tree of Thoughts sample multiple reasoning paths or explore search trees to improve mathematical and logical reasoning stability. This leverages transformer attention over explicit intermediate reasoning tokens."
+  },
+  {
+    "id": "eval_11",
+    "query": "Mixture of Experts (MoE) sparse routing and expert capacity optimization",
+    "endpoint": "research",
+    "expected_keywords": ["Mixture of Experts", "MoE", "top-k routing", "gating network", "sparse activation"],
+    "ground_truth": "Mixture of Experts (MoE) scales neural network parameter counts efficiently by replacing dense feed-forward networks with multiple expert sub-networks and a router (gating network). The router dynamically assigns each input token to a subset (top-k) of experts, keeping computational cost per token (FLOPs) bounded while expanding total parameter capacity. Load balancing losses and auxiliary capacity constraints prevent expert collapse and ensure even compute allocation."
+  },
+  {
+    "id": "eval_12",
+    "query": "Post-training quantization techniques for LLMs: GPTQ vs AWQ",
+    "endpoint": "literature",
+    "expected_keywords": ["quantization", "GPTQ", "AWQ", "INT4", "activation aware", "weight-only"],
+    "ground_truth": "Post-Training Quantization (PTQ) compresses LLM weights to lower bit-widths (such as 4-bit or 8-bit integer formats) to reduce memory footprint and latency. GPTQ utilizes second-order Hessian error information to perform layer-wise optimal weight quantization, whereas AWQ (Activation-aware Weight Quantization) protects salient weight channels corresponding to high-magnitude activations. Both techniques maintain near-fp16 task accuracy while enabling edge and single-GPU inference."
+  },
+  {
+    "id": "eval_13",
+    "query": "HNSW vector indexing algorithm for fast approximate nearest neighbor search",
+    "endpoint": "research",
+    "expected_keywords": ["HNSW", "vector index", "approximate nearest neighbor", "graph", "distance metric"],
+    "ground_truth": "Hierarchical Navigable Small World (HNSW) is a multi-layer graph-based algorithm for approximate nearest neighbor (ANN) search in high-dimensional vector spaces. Upper layers contain sparse long-range links for coarse routing, while lower layers contain dense short-range links for precise local search. HNSW achieves logarithmic search time complexity with high recall, making it the industry standard index for vector databases."
+  },
+  {
+    "id": "eval_14",
+    "query": "BM25 lexical retrieval vs dense vector retrieval in hybrid search systems",
+    "endpoint": "literature",
+    "expected_keywords": ["BM25", "dense retrieval", "TF-IDF", "hybrid search", "reciprocal rank fusion"],
+    "ground_truth": "BM25 is a term-frequency-based lexical search algorithm sensitive to exact keyword matches and term rarity (IDF). Dense retrieval uses neural text encoders to map queries and documents into continuous vector spaces to capture semantic similarity. Hybrid search systems combine BM25 and dense scores using algorithms like Reciprocal Rank Fusion (RRF) to leverage both precise exact-keyword matching and semantic context understanding."
+  },
+  {
+    "id": "eval_15",
+    "query": "Knowledge distillation methods for compressing large language models into small student models",
+    "endpoint": "research",
+    "expected_keywords": ["knowledge distillation", "teacher model", "student model", "KL divergence", "logits"],
+    "ground_truth": "Knowledge distillation transfers dark knowledge from a large teacher model to a compact student model by training the student to match the soft probability distributions (logits) of the teacher using Kullback-Leibler (KL) divergence loss. Feature-based and sequence-level distillation extend this by aligning intermediate hidden states and generated output sequences. This compresses LLM parameter sizes while preserving downstream task performance."
+  },
+  {
+    "id": "eval_16",
+    "query": "Speculative decoding for accelerating LLM inference speed",
+    "endpoint": "literature",
+    "expected_keywords": ["speculative decoding", "draft model", "target model", "verification", "latency"],
+    "ground_truth": "Speculative decoding accelerates LLM generation latency by using a small draft model to generate multiple candidate tokens quickly, which are then verified in parallel by the main target LLM in a single forward pass. Tokens accepted by the verification sampling scheme preserve the target model's exact output distribution. This reduces memory bandwidth bottlenecks and achieves 2x-3x inference speedups without quality loss."
+  },
+  {
+    "id": "eval_17",
+    "query": "Vision Transformer (ViT) architecture vs Convolutional Neural Networks (CNNs)",
+    "endpoint": "research",
+    "expected_keywords": ["Vision Transformer", "ViT", "patch embeddings", "inductive bias", "self-attention"],
+    "ground_truth": "Vision Transformers (ViT) process images by splitting them into non-overlapping patches, flattening them into sequence embeddings, and processing them with standard transformer self-attention blocks. Unlike Convolutional Neural Networks (CNNs), ViTs lack localized translation equivariance and scale-invariant inductive biases, requiring larger pre-training datasets or strong data augmentation. However, ViTs achieve superior global context modeling and scale better with massive pre-training data."
+  },
+  {
+    "id": "eval_18",
+    "query": "FlashAttention memory-efficient exact attention algorithm",
+    "endpoint": "literature",
+    "expected_keywords": ["FlashAttention", "IO-awareness", "SRAM", "HBM", "tiling", "recomputation"],
+    "ground_truth": "FlashAttention is an IO-aware exact attention algorithm that reorganizes GPU memory access patterns between high-bandwidth memory (HBM) and fast SRAM. By utilizing matrix tiling and online softmax rescaling, it computes exact self-attention without storing intermediate N x N attention matrices to HBM. This yields significant wall-clock speedups and enables context window scaling to tens of thousands of tokens."
+  },
+  {
+    "id": "eval_19",
+    "query": "Long-context LLMs: RoPE positional embeddings, YaRN, and KV-cache compression",
+    "endpoint": "research",
+    "expected_keywords": ["RoPE", "rotary positional embedding", "KV-cache", "YaRN", "context window"],
+    "ground_truth": "Extending context windows in transformer LLMs requires scaling positional encoding schemes and managing growing Key-Value (KV) cache memory. Rotary Position Embedding (RoPE) encodes relative position through rotation matrices in complex space, while methods like YaRN interpolate RoPE frequencies to extend context limits without retraining. Techniques such as Grouped-Query Attention (GQA) and KV-cache quantization further mitigate memory footprint during long-sequence generation."
+  },
+  {
+    "id": "eval_20",
+    "query": "Constitutional AI and AI-assisted alignment without human labels",
+    "endpoint": "literature",
+    "expected_keywords": ["Constitutional AI", "RLAIF", "critique", "revision", "alignment"],
+    "ground_truth": "Constitutional AI (CAI) automates model alignment by substituting human evaluators with a set of high-level principles or rules (a constitution). The model generates responses, self-critiques them according to constitutional guidelines, and rewrites them to produce preference training datasets. Reinforcement Learning from AI Feedback (RLAIF) then trains the model on these AI-generated preference pairs, drastically reducing reliance on human annotators."
+  },
+  {
+    "id": "eval_21",
+    "query": "State Space Models: Mamba architecture vs Transformer quadratic attention complexity",
+    "endpoint": "research",
+    "expected_keywords": ["Mamba", "State Space Model", "selective SSM", "linear time", "recurrent"],
+    "ground_truth": "Mamba is a Selective State Space Model (SSM) designed to overcome the quadratic time and memory complexity of standard Transformer self-attention. By making SSM parameters input-dependent, Mamba selectively retains or forgets context along sequences, enabling linear-time processing and constant-time token generation. Mamba achieves performance competitive with Transformers across language modeling, audio, and genomics benchmarks."
+  },
+  {
+    "id": "eval_22",
+    "query": "Reranking models in retrieval pipelines: Cross-Encoders vs Bi-Encoders",
+    "endpoint": "literature",
+    "expected_keywords": ["reranking", "Cross-Encoder", "Bi-Encoder", "retrieval", "relevance score"],
+    "ground_truth": "Bi-Encoders independently compute query and document vector embeddings for fast approximate nearest neighbor search across large corpora. Cross-Encoders concatenate query and document text into a single transformer input to compute rich token-level cross-attention relevance scores, offering significantly higher precision. Modern RAG pipelines use fast Bi-Encoder retrieval for top-K candidates followed by Cross-Encoder reranking for final prompt selection."
+  },
+  {
+    "id": "eval_23",
+    "query": "Diffusion Policy and action space modeling in robotic manipulation",
+    "endpoint": "research",
+    "expected_keywords": ["Diffusion Policy", "robotics", "action trajectory", "behavior cloning", "multimodal distribution"],
+    "ground_truth": "Diffusion Policy frames robotic manipulation action generation as a conditional denoising diffusion process over action trajectories. Unlike traditional deterministic behavior cloning, Diffusion Policy handles complex multimodal action distributions, stable training dynamics, and high-dimensional continuous action spaces. It allows robots to execute continuous, smooth closed-loop control policies across complex physical manipulation tasks."
+  },
+  {
+    "id": "eval_24",
+    "query": "Preference optimization methods: IPO, KTO, and ORPO comparison",
+    "endpoint": "literature",
+    "expected_keywords": ["IPO", "KTO", "ORPO", "preference optimization", "reference-free"],
+    "ground_truth": "Beyond DPO, preference optimization techniques address specific algorithmic limitations in direct policy learning. Identity Preference Optimization (IPO) adds regularization to prevent over-fitting preference probabilities, while Kahneman-Tversky Optimization (KTO) learns directly from binary signal labels (desirable/undesirable) without paired preference data. ORPO combines supervised fine-tuning and preference alignment into a single reference-free loss function."
+  },
+  {
+    "id": "eval_25",
+    "query": "Parameter Efficient Fine-Tuning (PEFT) methods beyond LoRA: QLoRA, Prefix Tuning, and Prompt Tuning",
+    "endpoint": "research",
+    "expected_keywords": ["PEFT", "QLoRA", "Prefix Tuning", "Prompt Tuning", "NF4"],
+    "ground_truth": "Parameter-Efficient Fine-Tuning (PEFT) techniques adapt large language models while updating only a tiny fraction of parameters. QLoRA combines 4-bit NormalFloat (NF4) quantization and double quantization with LoRA adapters to enable fine-tuning 65B parameter models on a single GPU. Prefix Tuning and Prompt Tuning prepend learnable continuous virtual tokens to key-value states or input embeddings without altering main model weights."
+  }
+]

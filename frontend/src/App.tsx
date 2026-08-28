@@ -510,7 +510,7 @@ function App() {
         
         <div className="sidebar-footer">
           <span>v1.0.0</span>
-          <span>Llama 3.3 70B</span>
+          <span>GPT-OSS-20B</span>
         </div>
       </aside>
 
@@ -530,7 +530,7 @@ function App() {
               <span>Research Assistant</span>
             </div>
           </div>
-          <div className="model-badge">powered by Llama 3.3 70B</div>
+          <div className="model-badge">powered by GPT-OSS-20B</div>
         </header>
 
         {/* Chat Conversation Stream */}

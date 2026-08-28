@@ -4,14 +4,15 @@ import re
 from langchain_community.utilities.arxiv import ArxivAPIWrapper
 from langchain_core.messages import HumanMessage
 from logger import get_logger
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from urllib.parse import urlparse
 
 logger = get_logger(__name__)
 load_dotenv()
-SUMMARISER_MODEL = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
-    google_api_key=os.getenv("GOOGLE_API_KEY"),
+SUMMARISER_MODEL = ChatOpenAI(
+    model="openai/gpt-oss-20b",
+    base_url="https://integrate.api.nvidia.com/v1",
+    api_key=os.getenv("NVIDIA_API_KEY"),
     temperature=0.1
 )
 

@@ -1,12 +1,12 @@
 # Research Assistant - Backend Current State
 
-The backend is built as a **FastAPI** application that serves as the core orchestration layer for the AI Research Assistant. It interfaces with academic APIs, a local vector database, web search APIs, and NVIDIA hosted LLMs (meta/llama) via LangChain and LangGraph.
+The backend is built as a **FastAPI** application that serves as the core orchestration layer for the AI Research Assistant. It interfaces with academic APIs, a local vector database, web search APIs, and NVIDIA-hosted GPT-OSS-20B (`openai/gpt-oss-20b`) via LangChain's OpenAI-compatible client and LangGraph.
 
 ---
 
 ## 🛠️ Technology Stack
 - **Framework**: FastAPI
-- **LLM Integration**: LangChain (`langchain_google_genai`)
+- **LLM Integration**: LangChain (`langchain_openai.ChatOpenAI` pointed at NVIDIA's OpenAI-compatible endpoint)
 - **Agent Orchestration**: LangGraph (StateGraph)
 - **Vector Database**: ChromaDB
 - **Academic APIs**: Semantic Scholar, arXiv API (via `langchain_community.utilities.arxiv`)
@@ -26,8 +26,8 @@ The backend is built as a **FastAPI** application that serves as the core orches
 
 ### 2. LangGraph ReAct Agent (`backend/api/agent/`)
 - **`agent.py`**: Builds the agent workflow graph:
-  - **Router Node**: Uses `gemini-2.5-flash` with structured output to dynamically select which tools are required for the user's query.
-  - **Agent Node**: Primary reasoning model using `gemini-2.5-flash`.
+  - **Router Node**: Uses GPT-OSS-20B (`openai/gpt-oss-20b`) with structured output to dynamically select which tools are required for the user's query.
+  - **Agent Node**: Primary reasoning model, also GPT-OSS-20B.
   - **Tool Loop & Constraints**: Implements a hard cap of **3 tool rounds** to prevent run-away loops.
 - **`tools.py`**: Implements 4 LangChain tools:
   - `research_topic`: Synthesizes arXiv, Semantic Scholar, and Web search.
@@ -51,9 +51,10 @@ The backend is built as a **FastAPI** application that serves as the core orches
 
 ## ⚙️ Configuration & Environment Variables
 Configured via the `backend/.env` file:
-- `GOOGLE_API_KEY`: Google AI (Gemini) API authentication.
+- `NVIDIA_API_KEY`: NVIDIA API authentication for GPT-OSS-20B (used by `ChatOpenAI` against `https://integrate.api.nvidia.com/v1`).
 - `TAVILY_API_KEY`: Web search API.
 - `SEMANTIC_SCHOLAR_API_KEY`: For higher rate-limits on Semantic Scholar graph lookups.
+- `LANGCHAIN_TRACING_V2` / `LANGCHAIN_API_KEY` / `LANGCHAIN_PROJECT`: optional LangSmith tracing, auto-picked up by LangChain at import time.
 
 ---
 
