@@ -38,7 +38,7 @@
 ### Frontend
 - **React 19 (TypeScript)** - Modern UI development
 - **Vite** - Lightning-fast build tool
-- **Tailwind CSS / Vanilla CSS** - Custom dark mode themes
+- **Vanilla CSS** - Custom dark mode themes
 - **Server-Sent Events (SSE)** - Real-time streaming
 
 ---
@@ -57,7 +57,7 @@ To get a local copy up and running, follow these simple steps.
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/research-assistant.git
+   git clone https://github.com/TanKaizokuO/research-assistant.git
    cd research-assistant
    ```
 
@@ -77,7 +77,7 @@ To get a local copy up and running, follow these simple steps.
 3. **Backend Environment Variables**
    Create a `.env` file in the `backend/` directory and configure your API keys:
    ```env
-   NVIDIA_API_KEY=your_nvidia_api_key_here
+   GOOGLE_API_KEY=your_google_api_key_here
    TAVILY_API_KEY=your_tavily_api_key_here
    SEMANTIC_SCHOLAR_API_KEY=your_semantic_scholar_api_key_here # Optional
    ```
@@ -120,6 +120,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Contact
 
-**Your Name** - [@your_twitter](https://twitter.com/your_twitter) - email@example.com
+**TanKaizokuO** - tanishqbhattacharjee22@gmail.com
 
-Project Link: [https://github.com/your-username/research-assistant](https://github.com/your-username/research-assistant)
+Project Link: [https://github.com/TanKaizokuO/research-assistant](https://github.com/TanKaizokuO/research-assistant)

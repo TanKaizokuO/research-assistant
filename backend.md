@@ -6,7 +6,7 @@ The backend is built as a **FastAPI** application that serves as the core orches
 
 ## 🛠️ Technology Stack
 - **Framework**: FastAPI
-- **LLM Integration**: LangChain (`langchain_nvidia_ai_endpoints`)
+- **LLM Integration**: LangChain (`langchain_google_genai`)
 - **Agent Orchestration**: LangGraph (StateGraph)
 - **Vector Database**: ChromaDB
 - **Academic APIs**: Semantic Scholar, arXiv API (via `langchain_community.utilities.arxiv`)
@@ -26,8 +26,8 @@ The backend is built as a **FastAPI** application that serves as the core orches
 
 ### 2. LangGraph ReAct Agent (`backend/api/agent/`)
 - **`agent.py`**: Builds the agent workflow graph:
-  - **Router Node**: Uses `meta/llama-3.1-8b-instruct` with structured output to dynamically select which tools are required for the user's query.
-  - **Agent Node**: Primary reasoning model using `meta/llama-3.3-70b-instruct`. 
+  - **Router Node**: Uses `gemini-2.5-flash` with structured output to dynamically select which tools are required for the user's query.
+  - **Agent Node**: Primary reasoning model using `gemini-2.5-flash`.
   - **Tool Loop & Constraints**: Implements a hard cap of **3 tool rounds** to prevent run-away loops.
 - **`tools.py`**: Implements 4 LangChain tools:
   - `research_topic`: Synthesizes arXiv, Semantic Scholar, and Web search.
@@ -51,10 +51,9 @@ The backend is built as a **FastAPI** application that serves as the core orches
 
 ## ⚙️ Configuration & Environment Variables
 Configured via the `backend/.env` file:
-- `NVIDIA_API_KEY`: NVIDIA AI Foundation endpoints authentication.
+- `GOOGLE_API_KEY`: Google AI (Gemini) API authentication.
 - `TAVILY_API_KEY`: Web search API.
 - `SEMANTIC_SCHOLAR_API_KEY`: For higher rate-limits on Semantic Scholar graph lookups.
-- `LANGSMITH_*`: LangSmith tracing project setup for debug logs.
 
 ---
 
@@ -62,6 +61,6 @@ Configured via the `backend/.env` file:
 To start the development server:
 ```bash
 cd backend
-../.venv/bin/python main.py
+python main.py
 ```
 This runs the application on `http://localhost:8000` with hot-reloading enabled.
