@@ -81,3 +81,7 @@ arxiv/
 chroma_db/
 pdf-from-url/
 pdf-from-user/
+
+# Local agent/tooling config
+.omp/
+.claude/
